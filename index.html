@@ -30,7 +30,7 @@
 <body oncontextmenu="return false;">
 
 <div id="header">
-    <div id="timer-container">Sisa Waktu: <span id="time">00:00</span></div>
+    <div id="timer-container">Sisa Waktu: <span id="time">60:00</span></div>
     <div class="warning">⚠️ JANGAN REFRESH ATAU PINDAH TAB. BATAS PELANGGARAN: 1 KALI.</div>
 </div>
 
@@ -54,7 +54,7 @@
 
     function blockAccess(reason) {
         localStorage.setItem('exam_status', 'blocked');
-        formFrame.remove();
+        if (formFrame) formFrame.remove();
         overlay.style.display = 'block';
         if (reason === 'time') {
             statusTitle.textContent = "WAKTU HABIS!";
@@ -108,24 +108,33 @@
     };
 
     // --- 3. LOGIKA TIMER PERSISTEN (60 MENIT) ---
-    let examDuration = 60 * 60 * 1000; // 60 Menit ke Milidetik
-    let endTime = localStorage.getItem('exam_end_time');
+    let durationInMinutes = 60; 
+    let examDuration = durationInMinutes * 60 * 1000; 
+    let now = new Date().getTime();
 
-    if (!endTime) {
-        endTime = new Date().getTime() + examDuration;
+    // Mengambil endTime dan memastikannya sebagai angka (Number)
+    let storedEndTime = localStorage.getItem('exam_end_time');
+    let endTime;
+
+    if (!storedEndTime || isNaN(storedEndTime)) {
+        // Jika belum ada data waktu di browser, set 60 menit dari sekarang
+        endTime = now + examDuration;
         localStorage.setItem('exam_end_time', endTime);
+    } else {
+        endTime = Number(storedEndTime);
     }
 
     let timerInterval = setInterval(function() {
-        let now = new Date().getTime();
-        let remaining = endTime - now;
+        let currentTime = new Date().getTime();
+        let remaining = endTime - currentTime;
 
         if (remaining <= 0) {
             clearInterval(timerInterval);
             display.textContent = "00:00";
             blockAccess('time');
         } else {
-            let mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            // Hitung menit dan detik
+            let mins = Math.floor(remaining / (1000 * 60));
             let secs = Math.floor((remaining % (1000 * 60)) / 1000);
             
             display.textContent = 
